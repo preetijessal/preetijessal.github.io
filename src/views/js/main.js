@@ -406,13 +406,13 @@ var resizePizzas = function(size) {
   function changeSliderLabel(size) {
     switch(size) {
       case "1":
-        document.querySelector("#pizzaSize").innerHTML = "Small";
+        document.document.getElementById("#pizzaSize").innerHTML = "Small";
         return;
       case "2":
-        document.querySelector("#pizzaSize").innerHTML = "Medium";
+        document.document.getElementById("#pizzaSize").innerHTML = "Medium";
         return;
       case "3":
-        document.querySelector("#pizzaSize").innerHTML = "Large";
+        document.document.getElementById("#pizzaSize").innerHTML = "Large";
         return;
       default:
         console.log("bug in changeSliderLabel");
@@ -438,25 +438,23 @@ var resizePizzas = function(size) {
           return 0.5;
         default:
           console.log("bug in sizeSwitcher");
-      }
-    }
+      } 
+ 
+  //Deleted the determineDx function as it creates a lot of work, useless and creating forced synchronous layout
 
-    var newSize = sizeSwitcher(size);
-    var dx = (newSize - oldSize) * windowWidth;
-
-    return dx;
-  }
+  //Declared the variable outside the loop so that it can be used in for loop without querying the DOM everytime
+  var PizzaContainer= document.getElementsByClassName("randomPizzaContainer");
 
   // Iterates through pizza elements on the page and changes their widths
-  function changePizzaSizes(size) {
-    for (var i = 0; i < document.querySelectorAll(".randomPizzaContainer").length; i++) {
-      var dx = determineDx(document.querySelectorAll(".randomPizzaContainer")[i], size);
-      var newwidth = (document.querySelectorAll(".randomPizzaContainer")[i].offsetWidth + dx) + 'px';
-      document.querySelectorAll(".randomPizzaContainer")[i].style.width = newwidth;
+    for (var i = 0; i < PizzaContainer.length; i++) {
+
+      // sets the width of the element to percentage
+
+      PizzaContainer[i].style.width = newWidth;
     }
   }
-
   changePizzaSizes(size);
+    }
 
   // User Timing API is awesome
   window.performance.mark("mark_end_resize");
@@ -467,9 +465,11 @@ var resizePizzas = function(size) {
 
 window.performance.mark("mark_start_generating"); // collect timing data
 
-// This for-loop actually creates and appends all of the pizzas when the page loads
+
+// Declaring the pizzaDiv outside the loop
+var pizzasDiv = document.getElementById("randomPizzas");
+// This for-loop creates and appends all of the pizzas when the page loads
 for (var i = 2; i < 100; i++) {
-  var pizzasDiv = document.getElementById("randomPizzas");
   pizzasDiv.appendChild(pizzaElementGenerator(i));
 }
 
@@ -500,13 +500,14 @@ function logAverageFrame(times) {   // times is the array of User Timing measure
 function updatePositions() {
   frame++;
   window.performance.mark("mark_start_frame");
-
-  var items = document.querySelectorAll('.mover');
-  for (var i = 0; i < items.length; i++) {
-    var phase = Math.sin((document.body.scrollTop / 1250) + (i % 5));
+    // declaring var outside the loop
+  var top = document.body.scrollTop / 1250;
+/** Inside the for statement/loop*/
+for (var i = 0, len = items.length, phase; i < len; i++) {
+    phase = Math.sin(top + i % 5);
     items[i].style.left = items[i].basicLeft + 100 * phase + 'px';
-  }
-
+}    
+    
   // User Timing API to the rescue again. Seriously, it's worth learning.
   // Super easy to create custom metrics.
   window.performance.mark("mark_end_frame");
@@ -518,21 +519,44 @@ function updatePositions() {
 }
 
 // runs updatePositions on scroll
-window.addEventListener('scroll', updatePositions);
-
+var scroll;
+var ticking = false;
+window.addEventListener('scroll', function(e){
+    scroll = window.scrollY;
+    if(!ticking) {
+        window.requestAnimationFrame(function(){
+            updatePositions();
+            ticking = false;
+        })
+    }
+    ticking = true;
+});
 // Generates the sliding pizzas when the page loads.
 document.addEventListener('DOMContentLoaded', function() {
+
+  // Created the var before the loop to get rid of the querySelector in the loop
+  var movingPizzas = document.getElementById('movingPizzas1');
   var cols = 8;
   var s = 256;
-  for (var i = 0; i < 200; i++) {
-    var elem = document.createElement('img');
+  // Calculates the number of sliding pizzas depending on viewport size.
+  var viewportHeight = window.innerHeight;
+  var numOfViewportRows = Math.ceil(viewportHeight / s);
+  var numOfViewportPizzas = numOfViewportRows * cols;
+
+  for (var i = 0; i < numOfViewportPizzas; i++) {
+    var elem = document.createElement("img");
     elem.className = 'mover';
     elem.src = "images/pizza.png";
     elem.style.height = "100px";
     elem.style.width = "73.333px";
-    elem.basicLeft = (i % cols) * s;
+    elem.style.left = (i % cols) * s + "px";
     elem.style.top = (Math.floor(i / cols) * s) + 'px';
-    document.querySelector("#movingPizzas1").appendChild(elem);
+    // Using the variable name instead of using querySelector
+    //document.querySelector("#movingPizzas1").appendChild(elem);
+    movingPizzas.appendChild(elem);
   }
+  // Move window.items here to stop updatePositions from re-defining items on every scroll event
+  //Source: https://discussions.udacity.com/t/cant-reach-the-60-fps-and-pageinsights-goal/183210/8?u=david_31931020565290
+  window.items = document.getElementsByClassName('mover');
   updatePositions();
 });
