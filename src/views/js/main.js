@@ -447,6 +447,9 @@ var resizePizzas = function(size) {
 
   // Iterates through pizza elements on the page and changes their widths
     for (var i = 0; i < PizzaContainer.length; i++) {
+
+      // sets the width of the element to percentage
+
       PizzaContainer[i].style.width = newWidth;
     }
   }
@@ -497,13 +500,21 @@ function logAverageFrame(times) {   // times is the array of User Timing measure
 function updatePositions() {
   frame++;
   window.performance.mark("mark_start_frame");
-    // declaring var outside the loop
-  var top = document.body.scrollTop / 1250;
-/** Inside the for statement/loop*/
-for (var i = 0, len = items.length, phase; i < len; i++) {
-    phase = Math.sin(top + i % 5);
-    items[i].style.left = items[i].basicLeft + 100 * phase + 'px';
-}    
+
+  // declaring var outside the loop
+  var scr = scroll / 1250;
+  var cachedLength = window.items.length;
+  var phase_array= [];
+  var phase;
+  for (var i= 0; i < 5; i++) {
+    phase_array.push(Math.sin(scr + i));
+  }
+
+  // Repositioned pizzas
+  for (var k = 0; k < cachedLength; k++) {
+    phase = phase_array[k % 5];
+    window.items[k].style.transform = "translateX("+ (100 * phase) + "px)";
+  }
     
   // User Timing API to the rescue again. Seriously, it's worth learning.
   // Super easy to create custom metrics.
@@ -524,7 +535,7 @@ window.addEventListener('scroll', function(e){
         window.requestAnimationFrame(function(){
             updatePositions();
             ticking = false;
-        })
+        });
     }
     ticking = true;
 });
