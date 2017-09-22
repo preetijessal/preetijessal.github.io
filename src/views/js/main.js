@@ -403,16 +403,17 @@ var resizePizzas = function(size) {
   window.performance.mark("mark_start_resize");   // User Timing API function
 
   // Changes the value for the size of the pizza above the slider
+  //Changed querySlector to getElementByID
   function changeSliderLabel(size) {
     switch(size) {
       case "1":
-        document.querySelector("#pizzaSize").innerHTML = "Small";
+        document.getElementById("pizzaSize").innerHTML = "Small";
         return;
       case "2":
-        document.querySelector("#pizzaSize").innerHTML = "Medium";
+        document.getElementById("pizzaSize").innerHTML = "Medium";
         return;
       case "3":
-        document.querySelector("#pizzaSize").innerHTML = "Large";
+        document.getElementById("pizzaSize").innerHTML = "Large";
         return;
       default:
         console.log("bug in changeSliderLabel");
@@ -493,7 +494,7 @@ function logAverageFrame(times) {   // times is the array of User Timing measure
 // Moves the sliding background pizzas based on scroll position
 function updatePositions() {
   frame++;
-
+  window.performance.mark("mark_start_frame");
   var items = document.getElementsByClassName('mover');
   // Moved document.body request outside the for loop. This keeps the brower from having to query the DOM everytime the loop iterates.
   var stuff = document.body.scrollTop / 1250;
@@ -501,7 +502,7 @@ function updatePositions() {
     var phase = Math.sin((stuff) + (i % 5));
     items[i].style.left = items[i].basicLeft + 100 * phase + 'px';
   }
-  window.performance.mark("mark_start_frame");
+  
 
   // User Timing API to the rescue again. Seriously, it's worth learning.
   // Super easy to create custom metrics.
