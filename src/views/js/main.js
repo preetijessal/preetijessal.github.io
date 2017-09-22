@@ -406,40 +406,37 @@ var resizePizzas = function(size) {
   function changeSliderLabel(size) {
     switch(size) {
       case "1":
-        document.document.getElementById("#pizzaSize").innerHTML = "Small";
+        document.querySelector("#pizzaSize").innerHTML = "Small";
         return;
       case "2":
-        document.document.getElementById("#pizzaSize").innerHTML = "Medium";
+        document.querySelector("#pizzaSize").innerHTML = "Medium";
         return;
       case "3":
-        document.document.getElementById("#pizzaSize").innerHTML = "Large";
+        document.querySelector("#pizzaSize").innerHTML = "Large";
         return;
       default:
         console.log("bug in changeSliderLabel");
     }
   }
-
   changeSliderLabel(size);
-
-   // Returns the size difference to change a pizza element from one size to another. Called by changePizzaSlices(size).
-  function determineDx (elem, size) {
-    var oldWidth = elem.offsetWidth;
-    var windowWidth = document.querySelector("#randomPizzas").offsetWidth;
-    var oldSize = oldWidth / windowWidth;
-
-    // Changes the slider value to a percent width
-    function sizeSwitcher (size) {
+    // Changes the Pizza Sizes by setting their width
+    function changePizzaSizes(size){
+      var newWidth;
       switch(size) {
         case "1":
-          return 0.25;
+          newWidth= 25;
+        break;
         case "2":
-          return 0.3333;
+          newWidth= 33.33;
+        break;
         case "3":
-          return 0.5;
+          newWidth= 50;
+        break;
         default:
           console.log("bug in sizeSwitcher");
-      } 
- 
+      }
+
+  // Some changes have been made following the solution given by Cameron in the Quiz: Stop FSL
   //Deleted the determineDx function as it creates a lot of work, useless and creating forced synchronous layout
 
   //Declared the variable outside the loop so that it can be used in for loop without querying the DOM everytime
@@ -448,27 +445,24 @@ var resizePizzas = function(size) {
   // Iterates through pizza elements on the page and changes their widths
     for (var i = 0; i < PizzaContainer.length; i++) {
 
-      // sets the width of the element to percentage
-
       PizzaContainer[i].style.width = newWidth;
     }
   }
   changePizzaSizes(size);
-    }
 
   // User Timing API is awesome
   window.performance.mark("mark_end_resize");
   window.performance.measure("measure_pizza_resize", "mark_start_resize", "mark_end_resize");
   var timeToResize = window.performance.getEntriesByName("measure_pizza_resize");
-  console.log("Time to resize pizzas: " + timeToResize[timeToResize.length-1].duration + "ms");
+  console.log("Time to resize pizzas: " + timeToResize[0].duration + "ms");
 };
 
 window.performance.mark("mark_start_generating"); // collect timing data
 
+// This for-loop actually creates and appends all of the pizzas when the page loads
 
-// Declaring the pizzaDiv outside the loop
+// Moved pizzasDiv variable outside the loop to prevent repeated calls to the DOM everytime the for loop iterates.
 var pizzasDiv = document.getElementById("randomPizzas");
-// This for-loop creates and appends all of the pizzas when the page loads
 for (var i = 2; i < 100; i++) {
   pizzasDiv.appendChild(pizzaElementGenerator(i));
 }
@@ -490,7 +484,7 @@ function logAverageFrame(times) {   // times is the array of User Timing measure
   for (var i = numberOfEntries - 1; i > numberOfEntries - 11; i--) {
     sum = sum + times[i].duration;
   }
-  console.log("Average scripting time to generate last 10 frames: " + sum / 10 + "ms");
+  console.log("Average time to generate last 10 frames: " + sum / 10 + "ms");
 }
 
 // The following code for sliding background pizzas was pulled from Ilya's demo found at:
@@ -499,23 +493,16 @@ function logAverageFrame(times) {   // times is the array of User Timing measure
 // Moves the sliding background pizzas based on scroll position
 function updatePositions() {
   frame++;
+
+  var items = document.getElementsByClassName('mover');
+  // Moved document.body request outside the for loop. This keeps the brower from having to query the DOM everytime the loop iterates.
+  var stuff = document.body.scrollTop / 1250;
+  for (var i = 0; i < items.length; i++) {
+    var phase = Math.sin((stuff) + (i % 5));
+    items[i].style.left = items[i].basicLeft + 100 * phase + 'px';
+  }
   window.performance.mark("mark_start_frame");
 
-  // declaring var outside the loop
-  var scr = scroll / 1250;
-  var cachedLength = window.items.length;
-  var phase_array= [];
-  var phase;
-  for (var i= 0; i < 5; i++) {
-    phase_array.push(Math.sin(scr + i));
-  }
-
-  // Repositioned pizzas
-  for (var k = 0; k < cachedLength; k++) {
-    phase = phase_array[k % 5];
-    window.items[k].style.transform = "translateX("+ (100 * phase) + "px)";
-  }
-    
   // User Timing API to the rescue again. Seriously, it's worth learning.
   // Super easy to create custom metrics.
   window.performance.mark("mark_end_frame");
@@ -527,44 +514,24 @@ function updatePositions() {
 }
 
 // runs updatePositions on scroll
-var scroll;
-var ticking = false;
-window.addEventListener('scroll', function(e){
-    scroll = window.scrollY;
-    if(!ticking) {
-        window.requestAnimationFrame(function(){
-            updatePositions();
-            ticking = false;
-        });
-    }
-    ticking = true;
-});
+window.addEventListener('scroll', updatePositions);
+
 // Generates the sliding pizzas when the page loads.
 document.addEventListener('DOMContentLoaded', function() {
-
-  // Created the var before the loop to get rid of the querySelector in the loop
-  var movingPizzas = document.getElementById('movingPizzas1');
   var cols = 8;
   var s = 256;
-  // Calculates the number of sliding pizzas depending on viewport size.
-  var viewportHeight = window.innerHeight;
-  var numOfViewportRows = Math.ceil(viewportHeight / s);
-  var numOfViewportPizzas = numOfViewportRows * cols;
-
-  for (var i = 0; i < numOfViewportPizzas; i++) {
-    var elem = document.createElement("img");
+  
+  // Calculates number of pizzas needed to fill the browser window.
+  var pizzaNum = (window.innerHeight / 75) + (window.innerWidth / 75);
+  for (var i = 0; i < pizzaNum; i++) {
+  var elem = document.createElement('img');
     elem.className = 'mover';
     elem.src = "images/pizza.png";
     elem.style.height = "100px";
     elem.style.width = "73.333px";
-    elem.style.left = (i % cols) * s + "px";
+    elem.basicLeft = (i % cols) * s;
     elem.style.top = (Math.floor(i / cols) * s) + 'px';
-    // Using the variable name instead of using querySelector
-    //document.querySelector("#movingPizzas1").appendChild(elem);
-    movingPizzas.appendChild(elem);
+    document.getElementById("movingPizzas1").appendChild(elem);
   }
-  // Move window.items here to stop updatePositions from re-defining items on every scroll event
-  //Source: https://discussions.udacity.com/t/cant-reach-the-60-fps-and-pageinsights-goal/183210/8?u=david_31931020565290
-  window.items = document.getElementsByClassName('mover');
   updatePositions();
 });
